@@ -172,4 +172,3 @@ if($mybb->settings['blacklist_ice'] == "-1"){//auf eis ist deaktiviert
     eval("\$page = \"".$templates->get("blacklistIce")."\";");
 }
 output_page($page);
-?>

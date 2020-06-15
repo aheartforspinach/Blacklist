@@ -1,35 +1,53 @@
 <?php
 // automatische Blacklist by aheartforspinach
 
-if(!defined("IN_MYBB"))
+if (!defined("IN_MYBB")) {
+    die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
+}
+
+function blacklist_info()
 {
-	die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
+    return array(
+        "name"            => "Blacklist",
+        "description"    => "erstellt automatisch eine Liste von Charakteren, die auf der Blacklist stehen",
+        "author"        => "aheartforspinach",
+        "authorsite"    => "https://storming-gates.de/member.php?action=profile&uid=176",
+        "version"        => "1.0",
+        "compatibility" => "18*"
+    );
 }
 
-function blacklist_info(){
-	return array(
-		"name"			=> "Blacklist",
-		"description"	=> "erstellt automatisch eine Liste von Charakteren, die auf der Blacklist stehen",
-		"author"		=> "aheartforspinach",
-		"authorsite"	=> "https://storming-gates.de/member.php?action=profile&uid=176",
-		"version"		=> "1.0",
-		"compatibility" => "18*"
-	);
-}
-
-function blacklist_install(){
+function blacklist_install()
+{
     global $db, $cache, $mybb;
 
-    $db->write_query("ALTER TABLE ".TABLE_PREFIX."users ADD isOnBlacklist INT(1) NOT NULL DEFAULT '0';");
-    $db->write_query("ALTER TABLE ".TABLE_PREFIX."users ADD isOnBlacklistAnnulled INT(1) NOT NULL DEFAULT '0';");
-    $db->write_query("ALTER TABLE ".TABLE_PREFIX."users ADD hasSeenBlacklist INT(1) NOT NULL DEFAULT '0';");
+    $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD isOnBlacklist INT(1) NOT NULL DEFAULT '0';");
+    $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD isOnBlacklistAnnulled INT(1) NOT NULL DEFAULT '0';");
+    $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD hasSeenBlacklist INT(1) NOT NULL DEFAULT '0';");
+
+    // Task
+    $date = new DateTime('01.'. date("m.Y", strtotime('+1 month')));
+    $date->setTime(1,0,0); 
+    $blacklistTask = array(
+        'title' => 'Blacklist Reset', 
+        'description' => 'Automatically resets all fields from the blacklist plugin',
+        'file' => 'blacklist',
+        'minute' => 0,
+        'hour' => 0,
+        'day' => 1,
+        'month' => '*',
+        'weekday' => '*',
+        'nextrun' => $date->getTimestamp(),
+        'logging' => 1,
+        'locked' => 0);
+    $db->insert_query('tasks', $blacklistTask);
 
     //Einstellungen 
-	$setting_group = array(
-      'name' => 'blacklist',
-      'title' => 'Blacklist',
-      'description' => 'Einstellungen für das Blacklist-Plugin',
-      'isdefault' => 0
+    $setting_group = array(
+        'name' => 'blacklist',
+        'title' => 'Blacklist',
+        'description' => 'Einstellungen für das Blacklist-Plugin',
+        'isdefault' => 0
     );
     $gid = $db->insert_query("settinggroups", $setting_group);
 
@@ -78,16 +96,16 @@ function blacklist_install(){
         ),
         'blacklist_inplay' => array(
             'title' => 'Inplaykategorie',
-            'description' => 'Gib hier die ID von der Inplaykategorie ein.',
-            'optionscode' => 'text',
-            'value' => '-1', // Default
+            'description' => 'Wähle deine Inplaykategorie aus.',
+            'optionscode' => 'forumselectsingle',
+            'value' => '0', // Default
             'disporder' => 7
         ),
         'blacklist_archive' => array(
             'title' => 'Archivkategorie',
-            'description' => 'Gib hier die ID von der Archivkategorie ein.',
-            'optionscode' => 'text',
-            'value' => '-1', // Default
+            'description' => 'Wähle deine Archivkategorie aus.',
+            'optionscode' => 'forumselectsingle',
+            'value' => '0', // Default
             'disporder' => 8
         ),
         'blacklist_echo' => array(
@@ -99,17 +117,17 @@ function blacklist_install(){
         ),
     );
 
-    foreach($setting_array as $name => $setting){
+    foreach ($setting_array as $name => $setting) {
         $setting['name'] = $name;
         $setting['gid'] = $gid;
-  
+
         $db->insert_query('settings', $setting);
     }
 
     //Template blacklist bauen
     $insert_array = array(
-        'title'		=> 'blacklist',
-        'template'	=> $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
+        'title'        => 'blacklist',
+        'template'    => $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
         <head>
         <title>Blacklist</title>
         {$headerinclude}
@@ -155,16 +173,16 @@ function blacklist_install(){
             padding-left: 3px;
         }
     </style>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-      //Template blacklistIce bauen
+    //Template blacklistIce bauen
     $insert_array = array(
-        'title'		=> 'blacklistIce',
-        'template'	=> $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
+        'title'        => 'blacklistIce',
+        'template'    => $db->escape_string('<html xml:lang="de" lang="de" xmlns="http://www.w3.org/1999/xhtml">
         <head>
         <title>Blacklist</title>
         {$headerinclude}
@@ -212,133 +230,135 @@ function blacklist_install(){
             padding-left: 3px;
         }
     </style>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-      //Template blacklistUser bauen
-      $insert_array = array(
-        'title'		=> 'blacklistUser',
-        'template'	=> $db->escape_string('$username $deleteButton<br/>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+    //Template blacklistUser bauen
+    $insert_array = array(
+        'title'        => 'blacklistUser',
+        'template'    => $db->escape_string('$username $deleteButton<br/>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-      //Template blacklistUserGestrichen bauen
-      $insert_array = array(
-        'title'		=> 'blacklistUserAnnulled',
-        'template'	=> $db->escape_string('<s>$username</s><br/>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+    //Template blacklistUserGestrichen bauen
+    $insert_array = array(
+        'title'        => 'blacklistUserAnnulled',
+        'template'    => $db->escape_string('<s>$username</s><br/>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-      //Template blacklistHeader bauen
-      $insert_array = array(
-        'title'		=> 'blacklistHeader',
-        'template'	=> $db->escape_string('<div class="pm_alert">Die aktuelle <a href="/blacklist.php">Blacklist</a> ist draußen. Von dir befinden sich <b>keine Charaktere</b> auf dieser. <a href="/blacklist.php?seen=1" title="Nicht mehr anzeigen"><span style="font-size: 14px;margin-top: -2px;float:right;">✕</span></a></div>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+    //Template blacklistHeader bauen
+    $insert_array = array(
+        'title'        => 'blacklistHeader',
+        'template'    => $db->escape_string('<div class="pm_alert">Die aktuelle <a href="/blacklist.php">Blacklist</a> ist draußen. Von dir befinden sich <b>keine Charaktere</b> auf dieser. <a href="/blacklist.php?seen=1" title="Nicht mehr anzeigen"><span style="font-size: 14px;margin-top: -2px;float:right;">✕</span></a></div>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-      //Template blacklistHeaderChara bauen
-      $insert_array = array(
-        'title'		=> 'blacklistHeaderChara',
-        'template'	=> $db->escape_string('<div class="pm_alert">Die aktuelle <a href="/blacklist.php">Blacklist</a> ist draußen. Von dir stehen auf der Blacklist: <b> {$charanames} </b> <a href="/blacklist.php?seen=1" title="Nicht mehr anzeigen"><span style="font-size: 14px;margin-top: -2px;float:right;">✕</span></a></div>'),
-        'sid'		=> '-1',
-        'version'	=> '',
-        'dateline'	=> TIME_NOW
-      );
-      $db->insert_query("templates", $insert_array);
+    //Template blacklistHeaderChara bauen
+    $insert_array = array(
+        'title'        => 'blacklistHeaderChara',
+        'template'    => $db->escape_string('<div class="pm_alert">Die aktuelle <a href="/blacklist.php">Blacklist</a> ist draußen. Von dir stehen auf der Blacklist: <b> {$charanames} </b> <a href="/blacklist.php?seen=1" title="Nicht mehr anzeigen"><span style="font-size: 14px;margin-top: -2px;float:right;">✕</span></a></div>'),
+        'sid'        => '-1',
+        'version'    => '',
+        'dateline'    => TIME_NOW
+    );
+    $db->insert_query("templates", $insert_array);
 
-    rebuild_settings(); 
+    rebuild_settings();
 }
 
-function blacklist_is_installed(){
-  global $db, $mybb;
-	if(isset($mybb->settings['blacklist_applicant'])) {
-			return true;
-	}
-	return false;
+function blacklist_is_installed()
+{
+    global $db, $mybb;
+    if (isset($mybb->settings['blacklist_applicant'])) {
+        return true;
+    }
+    return false;
 }
 
-function blacklist_uninstall(){
+function blacklist_uninstall()
+{
     global $db;
     $db->delete_query('settings', "name IN('blacklist_guest','blacklist_applicant', 'blacklist_showUser', 'blacklist_teamaccs' 'blacklist_ice', 'blacklist_player', 'blacklist_inplay', 'blacklist_archive', 'blacklist_echo')");
     $db->delete_query('settinggroups', "name = 'blacklist'");
     $db->delete_query("templates", "title IN('blacklist','blacklistIce', 'blacklistUser', 'blacklistUserAnnulled', 'blacklistHeader', 'blacklistHeaderChara')");
-    $db->query("ALTER TABLE ".TABLE_PREFIX."users DROP isOnBlacklist");
-    $db->query("ALTER TABLE ".TABLE_PREFIX."users DROP isOnBlacklistAnnulled");
-    $db->query("ALTER TABLE ".TABLE_PREFIX."users DROP hasSeenBlacklist");
+    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP isOnBlacklist");
+    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP isOnBlacklistAnnulled");
+    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP hasSeenBlacklist");
     rebuild_settings();
 }
 
-function blacklist_activate(){
-  global $db, $mybb;
-  include MYBB_ROOT."/inc/adminfunctions_templates.php";
-  find_replace_templatesets("header", "#".preg_quote('{$awaitingusers}')."#i", '{$awaitingusers} {$header_blacklist}');
+function blacklist_activate()
+{
+    global $db, $mybb;
+    include MYBB_ROOT . "/inc/adminfunctions_templates.php";
+    find_replace_templatesets("header", "#" . preg_quote('{$awaitingusers}') . "#i", '{$awaitingusers} {$header_blacklist}');
 }
 
-function blacklist_deactivate(){
-  global $db, $mybb;
-  include MYBB_ROOT."/inc/adminfunctions_templates.php";
-  find_replace_templatesets("header", "#".preg_quote('{$header_blacklist}')."#i", '', 0);
+function blacklist_deactivate()
+{
+    global $db, $mybb;
+    include MYBB_ROOT . "/inc/adminfunctions_templates.php";
+    find_replace_templatesets("header", "#" . preg_quote('{$header_blacklist}') . "#i", '', 0);
 }
 
 //Benachrichtung bei Blacklist
 $plugins->add_hook('global_intermediate', 'blacklist_alert');
-function blacklist_alert(){
-    global $db, $mybb, $templates, $header_blacklist; 
+function blacklist_alert()
+{
+    global $db, $mybb, $templates, $header_blacklist;
 
-    $alertDays = intval($mybb->settings['blacklist_echo']); 
+    $alertDays = intval($mybb->settings['blacklist_echo']);
     $email = $mybb->user['email'];
-    
-    if(date("j", time()) == 1){
-        $db->query("UPDATE ".TABLE_PREFIX."users SET hasSeenBlacklist = 0 AND isOnBlacklist = 0 AND isOnBlacklistAnnulled = 0");
-    }
 
-    if($_GET['seen'] == 1){
-        $db->query("UPDATE ".TABLE_PREFIX."users SET hasSeenBlacklist = 1 WHERE email = '" . $email . "'");
+    if ($_GET['seen'] == 1) {
+        $update = array('hasSeenBlacklist' => 1);
+        $db->update_query('users', $update, 'email = ' . $email);
+        // $db->query("UPDATE ".TABLE_PREFIX."users SET hasSeenBlacklist = 1 WHERE email = '" . $email . "'");
     }
 
     $applicant = "";
-    if($mybb->settings['blacklist_applicant'] == "0"){
+    if ($mybb->settings['blacklist_applicant'] == "0") {
         $applicant = "AND usergroup != 2";
     }
 
-    $charas = $db->query("SELECT username,uid, hasSeenBlacklist
-    FROM ".TABLE_PREFIX."users 
-    WHERE email = '" . $email . "' AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 " . $applicant ."
-    ORDER BY username");
+    $charas = $db->simple_select('users', 'username, uid, hasSeenBlacklist', 'email = "' . $email . '" AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $applicant, array("order_by" => 'username'));
+    // $charas = $db->query("SELECT username,uid, hasSeenBlacklist
+    // FROM ".TABLE_PREFIX."users 
+    // WHERE email = '" . $email . "' AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 " . $applicant ."
+    // ORDER BY username");
     $header_blacklist = "";
     $charanames = "";
     $dontSee = false;
     $oneChara = true;
-    while($chara=$db->fetch_array($charas)) {
-        if($oneChara){
+    while ($chara = $db->fetch_array($charas)) {
+        if ($oneChara) {
             $charanames .=  $chara['username'];
             $oneChara = false;
-        }else{
+        } else {
             $charanames .=  ", " . $chara['username'];
         }
-        if($chara['hasSeenBlacklist'] == 1){
+        if ($chara['hasSeenBlacklist'] == 1) {
             $dontSee = true;
         }
     }
-    if(date("j", time()) <= $alertDays && $alertDays != -1 && $mybb->user['uid'] != 0 && !$dontSee){
-        if($charanames == ""){
-            eval("\$header_blacklist .= \"".$templates->get("blacklistHeader")."\";");
-        }else{
-            eval("\$header_blacklist .= \"".$templates->get("blacklistHeaderChara")."\";");
+    if (date("j", time()) <= $alertDays && $alertDays != -1 && $mybb->user['uid'] != 0 && !$dontSee) {
+        if ($charanames == "") {
+            eval("\$header_blacklist .= \"" . $templates->get("blacklistHeader") . "\";");
+        } else {
+            eval("\$header_blacklist .= \"" . $templates->get("blacklistHeaderChara") . "\";");
         }
     }
 }
-
-?>
