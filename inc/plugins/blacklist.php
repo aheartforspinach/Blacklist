@@ -26,10 +26,10 @@ function blacklist_install()
     $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD hasSeenBlacklist INT(1) NOT NULL DEFAULT '0';");
 
     // Task
-    $date = new DateTime('01.'. date("m.Y", strtotime('+1 month')));
-    $date->setTime(1,0,0); 
+    $date = new DateTime('01.' . date("m.Y", strtotime('+1 month')));
+    $date->setTime(1, 0, 0);
     $blacklistTask = array(
-        'title' => 'Blacklist Reset', 
+        'title' => 'Blacklist Reset',
         'description' => 'Automatically resets all fields from the blacklist plugin',
         'file' => 'blacklist',
         'minute' => 0,
@@ -39,7 +39,8 @@ function blacklist_install()
         'weekday' => '*',
         'nextrun' => $date->getTimestamp(),
         'logging' => 1,
-        'locked' => 0);
+        'locked' => 0
+    );
     $db->insert_query('tasks', $blacklistTask);
 
     //Einstellungen 
@@ -325,8 +326,7 @@ function blacklist_alert()
 
     if ($_GET['seen'] == 1) {
         $update = array('hasSeenBlacklist' => 1);
-        $db->update_query('users', $update, 'email = ' . $email);
-        // $db->query("UPDATE ".TABLE_PREFIX."users SET hasSeenBlacklist = 1 WHERE email = '" . $email . "'");
+        $db->update_query('users', $update, 'email = "' . $email . '"');
     }
 
     $applicant = "";
@@ -334,24 +334,24 @@ function blacklist_alert()
         $applicant = "AND usergroup != 2";
     }
 
+    $invisibleAccounts = explode(", ", $db->escape_string($mybb->settings['blacklist_teamaccs']));
+
     $charas = $db->simple_select('users', 'username, uid, hasSeenBlacklist', 'email = "' . $email . '" AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $applicant, array("order_by" => 'username'));
-    // $charas = $db->query("SELECT username,uid, hasSeenBlacklist
-    // FROM ".TABLE_PREFIX."users 
-    // WHERE email = '" . $email . "' AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 " . $applicant ."
-    // ORDER BY username");
     $header_blacklist = "";
     $charanames = "";
     $dontSee = false;
     $oneChara = true;
     while ($chara = $db->fetch_array($charas)) {
-        if ($oneChara) {
-            $charanames .=  $chara['username'];
-            $oneChara = false;
-        } else {
-            $charanames .=  ", " . $chara['username'];
-        }
-        if ($chara['hasSeenBlacklist'] == 1) {
-            $dontSee = true;
+        if (!is_numeric(array_search($chara['uid'], $invisibleAccounts))) {
+            if ($oneChara) {
+                $charanames .=  $chara['username'];
+                $oneChara = false;
+            } else {
+                $charanames .=  ", " . $chara['username'];
+            }
+            if ($chara['hasSeenBlacklist'] == 1) {
+                $dontSee = true;
+            }
         }
     }
     if (date("j", time()) <= $alertDays && $alertDays != -1 && $mybb->user['uid'] != 0 && !$dontSee) {
