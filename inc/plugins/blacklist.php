@@ -1,9 +1,6 @@
 <?php
-// automatische Blacklist by aheartforspinach
 
-if (!defined("IN_MYBB")) {
-    die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
-}
+if (!defined("IN_MYBB")) die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
 
 function blacklist_info()
 {
@@ -19,7 +16,7 @@ function blacklist_info()
 
 function blacklist_install()
 {
-    global $db, $cache, $mybb;
+    global $db;
 
     $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD isOnBlacklist INT(1) NOT NULL DEFAULT '0';");
     $db->write_query("ALTER TABLE " . TABLE_PREFIX . "users ADD isOnBlacklistAnnulled INT(1) NOT NULL DEFAULT '0';");
@@ -67,13 +64,6 @@ function blacklist_install()
             'value' => 0, // Default
             'disporder' => 2
         ),
-        'blacklist_showUser' => array(
-            'title' => 'User verstecken',
-            'description' => 'Sollen User nur ihre eigenen Charaktere auf der BL sehen? Falls nein, sehen User alle Charaktere und nicht nur ihre',
-            'optionscode' => 'yesno',
-            'value' => 0, // Default
-            'disporder' => 3
-        ),
         'blacklist_teamaccs' => array(
             'title' => 'Teamaccount',
             'description' => 'Gib hier mit Komma getrennt die UIDs von den Accounts an, die NICHT gelistet werden sollen. Falls alle gelistet werden sollen, gib -1 ein',
@@ -97,10 +87,10 @@ function blacklist_install()
         ),
         'blacklist_inplay' => array(
             'title' => 'Inplaykategorie',
-            'description' => 'Wähle deine Inplaykategorie aus.',
-            'optionscode' => 'forumselectsingle',
-            'value' => '0', // Default
-            'disporder' => 7
+            'description' => 'Wähle deine Inplaybereiche aus',
+            'optionscode' => 'forumselect',
+            'value' => '-1', // Default
+            'disporder' =>7
         ),
         'blacklist_archive' => array(
             'title' => 'Archivkategorie',
@@ -282,35 +272,34 @@ function blacklist_install()
 
 function blacklist_is_installed()
 {
-    global $db, $mybb;
-    if (isset($mybb->settings['blacklist_applicant'])) {
-        return true;
-    }
-    return false;
+    global $db;
+    return $db->field_exists('hasSeenBlacklist', 'users') ? true : false;
 }
 
 function blacklist_uninstall()
 {
     global $db;
-    $db->delete_query('settings', "name IN('blacklist_guest','blacklist_applicant', 'blacklist_showUser', 'blacklist_teamaccs' 'blacklist_ice', 'blacklist_player', 'blacklist_inplay', 'blacklist_archive', 'blacklist_echo')");
+    $db->delete_query('settings', "name LIKE 'blacklist_%'");
     $db->delete_query('settinggroups', "name = 'blacklist'");
-    $db->delete_query("templates", "title IN('blacklist','blacklistIce', 'blacklistUser', 'blacklistUserAnnulled', 'blacklistHeader', 'blacklistHeaderChara')");
-    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP isOnBlacklist");
-    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP isOnBlacklistAnnulled");
-    $db->query("ALTER TABLE " . TABLE_PREFIX . "users DROP hasSeenBlacklist");
+    $db->delete_query("templates", "title LIKE 'blacklist_%'");
+    $db->drop_column('users', 'isOnBlacklist');
+    $db->drop_column('users', 'isOnBlacklistAnnulled');
+    $db->drop_column('users', 'hasSeenBlacklist');
+
+    // task
+    $db->delete_query('tasks', 'title = "Blacklist Reset"');
+
     rebuild_settings();
 }
 
 function blacklist_activate()
 {
-    global $db, $mybb;
     include MYBB_ROOT . "/inc/adminfunctions_templates.php";
     find_replace_templatesets("header", "#" . preg_quote('{$awaitingusers}') . "#i", '{$awaitingusers} {$header_blacklist}');
 }
 
 function blacklist_deactivate()
 {
-    global $db, $mybb;
     include MYBB_ROOT . "/inc/adminfunctions_templates.php";
     find_replace_templatesets("header", "#" . preg_quote('{$header_blacklist}') . "#i", '', 0);
 }
@@ -319,43 +308,21 @@ function blacklist_deactivate()
 $plugins->add_hook('global_intermediate', 'blacklist_alert');
 function blacklist_alert()
 {
-    global $db, $mybb, $templates, $header_blacklist;
+    global $mybb, $templates, $header_blacklist;
+    require_once "inc/datahandlers/blacklist.php";
 
     $alertDays = intval($mybb->settings['blacklist_echo']);
-    $email = $mybb->user['email'];
+    $blacklistHandler = new blacklistHandler($mybb->user['uid']);
 
-    if ($_GET['seen'] == 1) {
-        $update = array('hasSeenBlacklist' => 1);
-        $db->update_query('users', $update, 'email = "' . $email . '"');
-    }
+    // als gesehen markieren
+    if ($_GET['seen'] == 1) $blacklistHandler->markAsSeen();
+    if($mybb->user['hasSeenBlacklist'] == 1) return;
 
-    $applicant = "";
-    if ($mybb->settings['blacklist_applicant'] == "0") {
-        $applicant = "AND usergroup != 2";
-    }
+    $header_blacklist = '';
+    $charanames = $blacklistHandler->getOwnBlacklistCharas();
 
-    $invisibleAccounts = explode(", ", $db->escape_string($mybb->settings['blacklist_teamaccs']));
-
-    $charas = $db->simple_select('users', 'username, uid, hasSeenBlacklist', 'email = "' . $email . '" AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $applicant, array("order_by" => 'username'));
-    $header_blacklist = "";
-    $charanames = "";
-    $dontSee = false;
-    $oneChara = true;
-    while ($chara = $db->fetch_array($charas)) {
-        if (!is_numeric(array_search($chara['uid'], $invisibleAccounts))) {
-            if ($oneChara) {
-                $charanames .=  $chara['username'];
-                $oneChara = false;
-            } else {
-                $charanames .=  ", " . $chara['username'];
-            }
-            if ($chara['hasSeenBlacklist'] == 1) {
-                $dontSee = true;
-            }
-        }
-    }
     if (date("j", time()) <= $alertDays && $alertDays != -1 && $mybb->user['uid'] != 0 && !$dontSee) {
-        if ($charanames == "") {
+        if ($charanames == '') {
             eval("\$header_blacklist .= \"" . $templates->get("blacklistHeader") . "\";");
         } else {
             eval("\$header_blacklist .= \"" . $templates->get("blacklistHeaderChara") . "\";");
