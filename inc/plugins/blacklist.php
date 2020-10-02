@@ -64,6 +64,13 @@ function blacklist_install()
             'value' => 0, // Default
             'disporder' => 2
         ),
+        'blacklist_applicant_group' => array(
+            'title' => 'Bewerbergruppe',
+            'description' => 'In welcher Gruppe sind die Bewerber?',
+            'optionscode' => 'groupselect',
+            'value' => 0, // Default
+            'disporder' => 3
+        ),
         'blacklist_teamaccs' => array(
             'title' => 'Teamaccount',
             'description' => 'Gib hier mit Komma getrennt die UIDs von den Accounts an, die NICHT gelistet werden sollen. Falls alle gelistet werden sollen, gib -1 ein',

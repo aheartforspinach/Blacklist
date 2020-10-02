@@ -18,7 +18,7 @@ $fidIceDB = $fidIce == -1 ? '' : 'fid' . $fidIce;
 $fidPlayer = intval($mybb->settings['blacklist_player']);
 
 $dayEcho = intval($mybb->settings['blacklist_echo']);
-$applicant = intval($mybb->settings['blacklist_applicant']) == 1 ? -1 : 2;
+$applicant = intval($mybb->settings['blacklist_applicant']) == 1 ? intval($mybb->settings['blacklist_applicant_group']) : -1;
 
 $invisibleAccounts = '';
 $accounts = explode(', ', $db->escape_string($mybb->settings['blacklist_teamaccs']));
@@ -27,7 +27,6 @@ foreach ($accounts as $account) {
     $invisibleAccounts .= 'XOR uid = ' . $account . ' ';
 }
 
-var_dump($mybb->user['isOnBlacklistAnnulled']);
 //User streichen
 if ($_POST["action"] == 'delete') $blacklistHandler->markAsAnnulled($mybb->user['uid']);
 

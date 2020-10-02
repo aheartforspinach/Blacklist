@@ -27,7 +27,7 @@ class blacklistHandler
 
         $query = $db->simple_select('users', 'uid', 'as_uid = ' . $mainUid);
         while ($result = $db->fetch_array($query)) {
-            array_push($returnArray, (int)$result['uid']);
+            array_push($uids, (int)$result['uid']);
         }
         return $uids;
     }
@@ -50,7 +50,7 @@ class blacklistHandler
         global $db, $mybb;
         $dontShowApplicants = $mybb->settings['blacklist_applicant'] == '0' ? 'and usergroup != 2' : '';
 
-        $charas = $db->simple_select('users', 'username, uid', 'find_in_set(uid, ' . $this->getUidSetFromAllCharacters() . ') AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $dontShowApplicants, array('order_by' => 'username'));
+        $charas = $db->simple_select('users', 'username, uid', 'find_in_set(uid, "' . $this->getUidSetFromAllCharacters() . '") AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $dontShowApplicants, array('order_by' => 'username'));
         $invisibleAccounts = explode(", ", $db->escape_string($mybb->settings['blacklist_teamaccs']));
         $blacklistCharas = array();
         while ($chara = $db->fetch_array($charas)) {
@@ -122,7 +122,7 @@ class blacklistHandler
         global $db;
         $update = array('hasSeenBlacklist' => 1);
         $uids = $this->getUidSetFromAllCharacters($this->uid);
-        $db->update_query('users', $update, 'find_in_set(uid, ' . $uids . ') or find_in_set(as_uid, ' . $uids . ')');
+        $db->update_query('users', $update, 'find_in_set(uid, "' . $uids . '") or find_in_set(as_uid, "' . $uids . '")');
     }
 
     public function markAsAnnulled($uid)
