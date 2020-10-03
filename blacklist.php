@@ -54,10 +54,10 @@ while ($user = $db->fetch_array($users)) {
             $deleteButton = "";
             eval("\$away .= \"" . $templates->get("blacklistUser") . "\";");
         }
-    } elseif (in_array($user['uid'], $blacklistUsers) && !in_array($user['uid'], $blacklistUsersAnnulled)) {
-        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     } elseif (in_array($user['uid'], $blacklistUsersAnnulled)) {
         eval("\$userBlack .= \"" . $templates->get("blacklistUserAnnulled") . "\";");
+    } elseif (in_array($user['uid'], $blacklistUsers)) {
+        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     }
 }
 
