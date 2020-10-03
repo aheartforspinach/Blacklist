@@ -47,17 +47,15 @@ class BlacklistHandler
      */
     public function getOwnBlacklistCharas()
     {
-        global $db, $mybb;
-        $dontShowApplicants = $mybb->settings['blacklist_applicant'] == '0' ? 'and usergroup != '. $mybb->settings['blacklist_applicant_group']  : '';
-
-        $charas = $db->simple_select('users', 'username, uid', 'find_in_set(uid, "' . $this->getUidSetFromAllCharacters() . '") AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $dontShowApplicants, array('order_by' => 'username'));
-        $invisibleAccounts = explode(", ", $db->escape_string($mybb->settings['blacklist_teamaccs']));
-        $blacklistCharas = array();
-        while ($chara = $db->fetch_array($charas)) {
-            if (!is_numeric(array_search($chara['uid'], $invisibleAccounts)))
-                array_push($blacklistCharas, $chara['username']);
+        global $mybb;
+        $ownCharas = $this->getUidArrayFromAllCharacters();
+        $ownBlacklistCharas = array();
+        foreach($this->getAllBlacklistCharas() as $blacklistChara) {
+            $user = get_user($blacklistChara);
+            if ($user['usergroup'] == $mybb->settings['blacklist_applicant_group'] || $user['away'] == 1 || $user['isOnBlacklistAnnulled'] == 1) continue;
+            if (in_array($blacklistChara, $ownCharas)) array_push($ownBlacklistCharas, $user['username']);
         }
-        return implode(', ', $blacklistCharas);
+        return implode(', ', $ownBlacklistCharas);
     }
 
     /**

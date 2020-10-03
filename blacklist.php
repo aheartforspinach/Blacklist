@@ -12,14 +12,13 @@ if ($mybb->settings['blacklist_guest'] == '0' && $mybb->user['uid'] == 0) error_
 
 require_once "inc/datahandlers/blacklist.php";
 $blacklistHandler = new BlacklistHandler($mybb->user['uid']);
-
 //Einstellungen holen
 $fidIce = intval($mybb->settings['blacklist_ice']);
 $fidIceDB = $fidIce == -1 ? '' : 'fid' . $fidIce;
 $fidPlayer = intval($mybb->settings['blacklist_player']);
 
 $dayEcho = intval($mybb->settings['blacklist_echo']);
-$applicant = intval($mybb->settings['blacklist_applicant']) == 1 ? intval($mybb->settings['blacklist_applicant_group']) : -1;
+$applicant = intval($mybb->settings['blacklist_applicant']) == 1 ? -1 : intval($mybb->settings['blacklist_applicant_group']);
 
 $invisibleAccounts = '';
 $accounts = explode(', ', $db->escape_string($mybb->settings['blacklist_teamaccs']));
@@ -55,10 +54,10 @@ while ($user = $db->fetch_array($users)) {
             $deleteButton = "";
             eval("\$away .= \"" . $templates->get("blacklistUser") . "\";");
         }
+    } elseif (in_array($user['uid'], $blacklistUsers) && !in_array($user['uid'], $blacklistUsersAnnulled)) {
+        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     } elseif (in_array($user['uid'], $blacklistUsersAnnulled)) {
         eval("\$userBlack .= \"" . $templates->get("blacklistUserAnnulled") . "\";");
-    } elseif (in_array($user['uid'], $blacklistUsers)) {
-        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     }
 }
 
