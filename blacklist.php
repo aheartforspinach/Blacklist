@@ -11,7 +11,8 @@ $thisMonth = date("m.Y", time());
 if ($mybb->settings['blacklist_guest'] == '0' && $mybb->user['uid'] == 0) error_no_permission();
 
 require_once "inc/datahandlers/blacklist.php";
-$blacklistHandler = new blacklistHandler($mybb->user['uid']);
+$blacklistHandler = new BlacklistHandler($mybb->user['uid']);
+
 //Einstellungen holen
 $fidIce = intval($mybb->settings['blacklist_ice']);
 $fidIceDB = $fidIce == -1 ? '' : 'fid' . $fidIce;
@@ -28,7 +29,7 @@ foreach ($accounts as $account) {
 }
 
 //User streichen
-if ($_POST["action"] == 'delete') $blacklistHandler->markAsAnnulled($mybb->user['uid']);
+if ($_POST["action"] == 'delete') $blacklistHandler->markAsAnnulled($_POST["id"]);
 
 $blacklistUsers = $blacklistHandler->getAllBlacklistCharas();
 $blacklistUsersAnnulled = $blacklistHandler->getAllAnnulledCharas($blacklistUsers);
@@ -54,10 +55,10 @@ while ($user = $db->fetch_array($users)) {
             $deleteButton = "";
             eval("\$away .= \"" . $templates->get("blacklistUser") . "\";");
         }
-    } elseif (in_array($user['uid'], $blacklistUsers) && !in_array($user['uid'], $blacklistUsersAnnulled)) {
-        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     } elseif (in_array($user['uid'], $blacklistUsersAnnulled)) {
         eval("\$userBlack .= \"" . $templates->get("blacklistUserAnnulled") . "\";");
+    } elseif (in_array($user['uid'], $blacklistUsers)) {
+        eval("\$userBlack .= \"" . $templates->get("blacklistUser") . "\";");
     }
 }
 

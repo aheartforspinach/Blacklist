@@ -319,7 +319,7 @@ function blacklist_alert()
     require_once "inc/datahandlers/blacklist.php";
 
     $alertDays = intval($mybb->settings['blacklist_echo']);
-    $blacklistHandler = new blacklistHandler($mybb->user['uid']);
+    $blacklistHandler = new BlacklistHandler($mybb->user['uid']);
 
     // als gesehen markieren
     if ($_GET['seen'] == 1) $blacklistHandler->markAsSeen();

@@ -3,7 +3,7 @@
 if (!defined("IN_MYBB")) die("Direct initialization of this file is not allowed.<br /><br />Please make sure IN_MYBB is defined.");
 global $plugins;
 
-class blacklistHandler
+class BlacklistHandler
 {
     private $uid;
 
@@ -48,7 +48,7 @@ class blacklistHandler
     public function getOwnBlacklistCharas()
     {
         global $db, $mybb;
-        $dontShowApplicants = $mybb->settings['blacklist_applicant'] == '0' ? 'and usergroup != 2' : '';
+        $dontShowApplicants = $mybb->settings['blacklist_applicant'] == '0' ? 'and usergroup != '. $mybb->settings['blacklist_applicant_group']  : '';
 
         $charas = $db->simple_select('users', 'username, uid', 'find_in_set(uid, "' . $this->getUidSetFromAllCharacters() . '") AND isOnBlacklist = 1 AND isOnBlacklistAnnulled = 0 AND away = 0 ' . $dontShowApplicants, array('order_by' => 'username'));
         $invisibleAccounts = explode(", ", $db->escape_string($mybb->settings['blacklist_teamaccs']));
@@ -89,9 +89,7 @@ class blacklistHandler
 
         //Differnez von allen User und denen, die nicht auf der BL sind
         $blacklistUsers = array_diff($allUsers, $notOnBlacklist);
-        foreach ($blacklistUsers as $user) {
-            $db->update_query('users', array('isOnBlacklist' => 1), 'uid =' . $user);
-        }
+        foreach ($blacklistUsers as $user) $db->update_query('users', array('isOnBlacklist' => 1), 'uid =' . $user);
         return $blacklistUsers;
     }
 
