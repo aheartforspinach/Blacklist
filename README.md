@@ -36,13 +36,13 @@ Solltet ihr von der "Auf Eis"-Funktion Gebrauch machen wollen, müsst ihr händi
 
 ## Vorschaubilder
 __Einstellungen des Blacklist-Plugin__
-![Blacklist Einstellungen](http://beforestorm.de/imageUpload/plugins/BlacklistEinstellungen.png)
+![Blacklist Einstellungen](http://aheartforspinach.de/upload/plugins/BlacklistEinstellungen.png)
 
 __Blacklistseite ohne "Auf Eis"__
-![Blacklistseite ohne "Auf Eis"](http://beforestorm.de/imageUpload/plugins/Blacklist.png)
+![Blacklistseite ohne "Auf Eis"](http://aheartforspinach.de/upload/plugins/Blacklist.png)
 
 __Blacklistseite mit "Auf Eis"__
-![Blacklistseite mit "Auf Eis"](http://beforestorm.de/imageUpload/plugins/BlacklistIce.png)
+![Blacklistseite mit "Auf Eis"](http://aheartforspinach.de/upload/plugins/BlacklistIce.png)
 
 __Blacklistbanner__
-![Blacklistbanner](http://beforestorm.de/imageUpload/plugins/BlacklistBanner.png)
+![Blacklistbanner](http://aheartforspinach.de/upload/plugins/BlacklistBanner.png)
