@@ -23,7 +23,7 @@ $applicant = intval($mybb->settings['blacklist_applicant']) == 1 ? -1 : intval($
 $invisibleAccounts = '';
 $accounts = explode(', ', $db->escape_string($mybb->settings['blacklist_teamaccs']));
 foreach ($accounts as $account) {
-    if ($account == -1) return;
+    if ($account == -1) continue;
     $invisibleAccounts .= 'XOR uid = ' . $account . ' ';
 }
 
