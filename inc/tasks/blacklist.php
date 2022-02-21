@@ -1,6 +1,6 @@
 <?php
 
-function task_whitelist($task){
+function task_blacklist($task){
     global $db;
 
     $updateUsers = array('hasSeenBlacklist' => 0, 'isOnBlacklist' => 0, 'isOnBlacklistAnnulled' => 0);

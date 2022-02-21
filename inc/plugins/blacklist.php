@@ -9,7 +9,7 @@ function blacklist_info()
         "description"    => "erstellt automatisch eine Liste von Charakteren, die auf der Blacklist stehen",
         "author"        => "aheartforspinach",
         "authorsite"    => "https://storming-gates.de/member.php?action=profile&uid=176",
-        "version"        => "1.0",
+        "version"        => "1.0.1",
         "compatibility" => "18*"
     );
 }
